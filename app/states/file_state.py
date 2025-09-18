@@ -35,33 +35,30 @@ class FileState(rx.State):
         return [f for f in self.files if f["token"] == self.access_token]
 
     @rx.event
-    async def handle_upload(self, uploaded_files: list[rx.UploadFile]):
-        if not uploaded_files:
+    async def handle_upload(self, filenames: list[str]):
+        if not filenames:
             yield rx.toast.error("No files selected for upload.")
             return
         if not self.access_token and (not self.is_admin):
             yield rx.toast.error("You need an access token to upload files.")
             return
         token_to_assign = self.access_token if not self.is_admin else "admin"
-        for uploaded_file in uploaded_files:
-            data = await uploaded_file.read()
-            file_path = UPLOAD_DIR / uploaded_file.name
-            with file_path.open("wb") as f:
-                f.write(data)
-            file_size = os.path.getsize(file_path)
-            mime_type, _ = mimetypes.guess_type(uploaded_file.name)
+        for filename in filenames:
+            upload_path = UPLOAD_DIR / filename
+            file_size = os.path.getsize(upload_path)
+            mime_type, _ = mimetypes.guess_type(filename)
             if mime_type is None:
                 mime_type = "application/octet-stream"
             new_file: File = {
                 "id": str(uuid.uuid4()),
-                "name": uploaded_file.name,
+                "name": filename,
                 "upload_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "size": file_size,
                 "mime_type": mime_type,
                 "token": token_to_assign,
             }
             self.files.append(new_file)
-        yield rx.toast.success(f"Successfully uploaded {len(uploaded_files)} file(s).")
+        yield rx.toast.success(f"Successfully uploaded {len(filenames)} file(s).")
         yield rx.clear_selected_files("upload_area")
 
     @rx.event
