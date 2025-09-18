@@ -36,4 +36,4 @@ app = rx.App(
         ),
     ],
 )
-app.add_page(index, title="DocuManager")
+app.add_page(index, title="Gremac DocuManager")
